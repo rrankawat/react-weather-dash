@@ -8,22 +8,33 @@ import Graph from './components/Graph'
 import TempFilter from './components/TempFilter'
 
 const API_KEY = import.meta.env.VITE_WEATHER_API_KEY
+const BASE_URL = import.meta.env.VITE_BASE_URL
 
 const App = () => {
   const [search, setSearch] = useState('')
   const [weather, setWeather] = useState({})
   const [presentDay, setPresentDay] = useState(0)
   const [tempUnit, setTempUnit] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const handleSubmit = async e => {
     e.preventDefault()
 
     if (search.length > 1) {
-      const res = await fetch(
-        `http://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${search}&days=3`
-      )
-      const data = await res.json()
-      setWeather(data)
+      try {
+        const res = await fetch(
+          `${BASE_URL}/forecast.json?key=${API_KEY}&q=${search}&days=3`
+        )
+        if (!res.ok) throw new Error('Failed to fetch data')
+
+        const data = await res.json()
+        setWeather(data)
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -43,6 +54,9 @@ const App = () => {
           </Button>
         </div>
       </form>
+
+      {Object.keys(weather).length !== 0 && loading && <p>Loading...</p>}
+      {error && <p>{error}</p>}
 
       {/* Weather Container */}
       {Object.keys(weather).length !== 0 && (
